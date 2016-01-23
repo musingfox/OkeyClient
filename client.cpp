@@ -23,7 +23,10 @@ void getcard(char* S,string key1,string value1,string key2,string value2){
 	const char *k1=key1.c_str() , *v1=value1.c_str(), *k2=key2.c_str(), *v2=value2.c_str();
 	sprintf(S,"{\"%s\": \"%s\",\"%s\": \"%s\"}",k1,v1,k2,v2);
 }
-
+void takecard(char* S, string key1, string value1, string key2, string value2, string key3, string value3){
+	const char *k1=key1.c_str(), *v1=value1.c_str(), *k2=key2.c_str(), *v2=value2.c_str(), *k3=key3.c_str(), *v3=value3.c_str();
+	sprintf(S,"{\"%s\":\"%s\",\"%s\":\"%s\",\"%s\":\"%s\"}",k1,v1,k2,v2,k3,v3);
+}
 
 int main(int argc, char* argv[]){
 	int soc , s , rec , con , state = 0;
@@ -51,6 +54,7 @@ int main(int argc, char* argv[]){
 	state = 0;
 	while( 1 ){
 		memset(S,0,sizeof(S) );
+		memset(buf,0,sizeof(buf) );
 		switch(state){
 			case 0:
 				init(S,"command","game","setting","log","verbose");
@@ -59,6 +63,10 @@ int main(int argc, char* argv[]){
 			case 1:
 				getcard(S,"player","1","action","hand");
 				state = 2;
+				break;
+			case 2:
+				takecard(S,"player","1","action","take","from","discard");
+				state = 3;
 				break;
 		}
 		printf("%s~~~~~\n",S);
