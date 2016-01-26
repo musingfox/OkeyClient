@@ -33,6 +33,7 @@ int Sum = 0 ;
 
 
 void show(){
+	printf("1 2 3 4 5 6 7 8 910111213\n");
 	for( int i = 0 ; i < 4 ; i++ ){
 		for( int j = 1 ; j < 14 ; j++ )
 			printf("%d ",hand[i][j]);
@@ -49,7 +50,7 @@ string makecards(const char* color , int num){
 
 const char* AI(int hand[4][14],int player,bool& istake){
 	
-	int flg = 0 , usedsz = 0 , usefulsz = 0 , st , A[4][14] , total = 0 , tmpcolor , tmpnum , before;
+	int flg = 0 , usedsz = 0 , usefulsz = 0 , st , A[4][14] , total = 0 , cardn = 0 , tmpcolor , tmpnum , before;
 	for( int i = 0 ; i < 4 ; i++ )
 		for( int j = 0 ; j < 14 ; j++ )
 			A[i][j] = hand[i][j];
@@ -61,7 +62,7 @@ const char* AI(int hand[4][14],int player,bool& istake){
 	show();
 	//init
 	for( int i = 0 ; i < 10 ; i++ )
-	used[i].clear(),useful[i].clear();
+		used[i].clear(),useful[i].clear();
 	Sum = usedsz = usefulsz = 0;
 	//get used card
 	for( int i = 1 ; i < 14 ; i++ ){
@@ -81,28 +82,31 @@ const char* AI(int hand[4][14],int player,bool& istake){
 			usedsz++;
 		}
 	}
+	printf("usedsz %d\n",usedsz);
 	flg = 0;
 	for( int i = 0 ; i < 4 ; i++ ){
 		for( int j = 1 ; j < 14 ; j++ ){
 			st = j;flg = 0;
-			if( A[i][j] )
+			if( A[i][j] ){
 				for(  ; j < 14 ; j++ ){
 					if( A[i][j] ){
 						flg++;
 					}
 					else break;
 				}
-			if( flg >= 3 ){
-				for( int k = st ; k < j ; k++ ){
-					A[i][k]--;Sum++;
-					used[usedsz].push_back(pair<int,int>(i,k) );
+				if( flg >= 3 ){
+					for( int k = st ; k < j ; k++ ){
+						A[i][k]--;Sum++;
+						used[usedsz].push_back(pair<int,int>(i,k) );
+					}
+					usedsz++;
 				}
-				usedsz++;
 			}
-			
 		}
 	}
-	
+	printf("usedsz %d!\n",usedsz);
+	//get useful card
+	usefulsz = 0;
 	for( int i = 1 ; i < 14 ; i++ ){
 		flg = 0;
 		for( int j = 0 ; j < 4 ; j++ ){
@@ -120,37 +124,38 @@ const char* AI(int hand[4][14],int player,bool& istake){
 			usefulsz++;
 		}
 	}
+	printf("usefulsz %d\n",usefulsz);
 	st = 0;
 	for( int i = 0 ; i < 4 ; i++ ){
-		
 		for( int j = 1 ; j < 14 ; j++ ){
 			st = j;flg = 0;
-			if( A[i][j] )
+			if( A[i][j] ){
 				for(  ; j < 14 ; j++ ){
 					if( A[i][j] ){
 						flg++;
 					}
 					else break;
 				}
-			if( flg >= 2 ){
-				for( int k = st ; k < j ; k++ ){
-					A[i][k]--;Sum++;
-					used[usefulsz].push_back(pair<int,int>(i,k) );
+				if( flg >= 2 ){
+					for( int k = st ; k < j ; k++ ){
+						A[i][k]--;Sum++;
+						useful[usefulsz].push_back(pair<int,int>(i,k) );
+					}
+					usefulsz++;
 				}
-				usefulsz++;
 			}
-			
 		}
 	}
+	printf("usefulsz!%d\n",usefulsz);
 	if( !istake && A[tmpcolor][tmpnum] - before < 1 ){
 		istake = true;
 	}
 	
-	
+	cout << "use" << usedsz << " " << usefulsz << endl;
 	//get trash
 	for( int i = 0 ; i < 4 ; i++ )
 		for( int j = 1 ; j < 14 ; j++ )
-			if( A[i][j] )
+			while( A[i][j]-- )
 				trash.push_back(pair<int,int>(i,j) );
 	
 	for( int i = 0 ; i < usedsz ; i++ ){
@@ -165,24 +170,26 @@ const char* AI(int hand[4][14],int player,bool& istake){
 	}
 	//build new hand
 	string cards;
-	total = 0;
+	total = cardn = 0;
 	for( int i = 0 ; i < usedsz ; i++,total++, cards+= ", " ){
-		for( int j = 0 ; j < used[i].size() ; j++, total++, cards+=", " )
+		for( int j = 0 ; j < used[i].size() ; j++, total++,cardn++, cards+=", " )
 			cards += makecards(Color[used[i][j].first],used[i][j].second);
 		cards += makecards("empty",-1);
 	}
 	for( int i = 0 ; i < usefulsz ; i++,total++, cards += ", " ){
-		for( int j = 0 ; j < useful[i].size() ; j++, total++ , cards += ", " )
+		for( int j = 0 ; j < useful[i].size() ; j++, total++ , cardn++ , cards += ", " )
 			cards += makecards(Color[useful[i][j].first],useful[i][j].second);
 		cards += makecards("empty",-1);
 	}
-	for( int i = 0 ; i < trash.size() ; i++,total++, cards += ", " )
+	for( int i = 0 ; cardn < 14 && i < trash.size() ; i++,total++, cardn++, cards += ", " ){
 		cards += makecards(Color[trash[i].first],trash[i].second);
-	cout << "total " << total << endl;
+		
+	}
+	cout << "total " << total << " " << cardn << endl;
 	for( int i = total ; i < 23 ; i++, cards += ", " )
 		cards += makecards("empty",-1);
 	cards += makecards("empty",-1);
-	cards = (string)"\"card\"" + ": " + "[" + cards + "]";
+	cards = (string)"\"cards\"" + ": " + "[" + cards + "]";
 	return cards.c_str();
 }
 
@@ -245,7 +252,6 @@ int main(int argc, char* argv[]){
 					getcard(tmp);
 					istake = false;
 					cards = AI(hand,player,istake);
-					cout << cards << "%%%%%%%" << endl;
 					if( istake )
 						takecard(S,"player",now,"action","take","from","discard");
 					else 
@@ -253,8 +259,6 @@ int main(int argc, char* argv[]){
 					state = 2;
 					break;
 				case 2:
-					if( !istake )
-						cards = AI2(hand);
 					throwcard(S,"player",now,"action","throw",cards);
 					player = (player+1)%4;
 					state = 0;
