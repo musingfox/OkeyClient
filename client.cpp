@@ -29,14 +29,15 @@ char tmp[2048];
 vector< pair<int,int> > used[10]; // color , num
 vector< pair<int,int> > useful[10];
 vector< pair<int,int> > trash;
-int Sum = 0 ;
+int Sum;
+bool iswin = false , wait = false;
 
 
-void show(){
+void show(int A[4][14]){
 	printf("1 2 3 4 5 6 7 8 910111213\n");
 	for( int i = 0 ; i < 4 ; i++ ){
 		for( int j = 1 ; j < 14 ; j++ )
-			printf("%d ",hand[i][j]);
+			printf("%d ",A[i][j]);
 		puts("");
 	}
 	puts("!!!!!!!!!!!!!!!!");
@@ -54,22 +55,20 @@ const char* AI(int hand[4][14],int player,bool& istake){
 	for( int i = 0 ; i < 4 ; i++ )
 		for( int j = 0 ; j < 14 ; j++ )
 			A[i][j] = hand[i][j];
-	tmpcolor = top[player].first , tmpnum = top[player].second;
-	before = A[tmpcolor][tmpnum];
+	if( !istake ){
+		tmpcolor = top[player].first , tmpnum = top[player].second;
+		before = A[tmpcolor][tmpnum]; A[tmpcolor][tmpnum]++;
+	}
 	cout << tmpcolor << " " << tmpnum << endl;
 	for( int test = 0 ; test < 2 ; test++ ){
 		
 		//init
-		for( int i = 0 ; i < 4 ; i++ )
-			for( int j = 1 ; j < 14 ; j++ )
-				A[i][j] = hand[i][j];
-		if( !istake && !test ){
-			A[tmpcolor][tmpnum]++;puts("!!");
-		}
+		
 		for( int i = 0 ; i < 10 ; i++ )
-			used[i].clear(),useful[i].clear();
+			used[i].clear() , useful[i].clear();
+		trash.clear();
 		Sum = usedsz = usefulsz = 0;
-		show();
+		show(A);
 		//get used card
 		for( int i = 1 ; i < 14 ; i++ ){
 			flg = 0;
@@ -149,28 +148,22 @@ const char* AI(int hand[4][14],int player,bool& istake){
 				}
 			}
 		}
-		if( !istake && A[tmpcolor][tmpnum] - before < 1 ){
+		if( !istake && !test && A[tmpcolor][tmpnum] - before < 1 ){
 			istake = true;
 		}
+		if( !test )
+			for( int i = 0 ; i < 4 ; i++ )
+				for( int j = 1 ; j < 14 ; j++ )
+					A[i][j] = hand[i][j];
+		
 	}
 	
-	cout << "use" << usedsz << " " << usefulsz << endl;
 	//get trash
 	for( int i = 0 ; i < 4 ; i++ )
 		for( int j = 1 ; j < 14 ; j++ )
 			while( A[i][j]-- )
 				trash.push_back(pair<int,int>(i,j) );
 	
-	for( int i = 0 ; i < usedsz ; i++ ){
-		for( int j = 0 ; j < used[i].size() ; j++ )
-			cout << used[i][j].first << " "<<  used[i][j].second << endl;
-		puts("@@");
-	}
-	for( int i = 0 ; i < usefulsz ; i++ ){
-		for( int j = 0 ; j < useful[i].size() ; j++ )
-			cout << useful[i][j].first << " " << useful[i][j].second << endl;
-		puts("@");
-	}
 	//build new hand
 	string cards;
 	total = cardn = 0;
