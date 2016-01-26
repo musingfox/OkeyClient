@@ -118,6 +118,7 @@ int main(int argc, char* argv[]){
 		}
 		else {
 			const char* now = to_string(player+1).c_str();
+			cout << "Now is " << now << endl;
 			switch(state){
 				case 0:
 					get(S,"player",now,"action","hand");
@@ -125,7 +126,7 @@ int main(int argc, char* argv[]){
 					break;
 				case 1:
 					memset(hand,0,sizeof(hand) );
-					getcard(tmp);
+					getcard(tmp);show(hand);
 					istake = false;
 					cards = Istake(hand,(player+3)%4,istake);
 					if( istake )
@@ -140,8 +141,7 @@ int main(int argc, char* argv[]){
 					}
 					else{
 						newcard = getnew(tmp);
-					//	cout << newcard.first << "! !" << newcard.second << endl;
-						cards = AI(hand,newcard);puts("AIAIAIAI");
+						cards = AI(hand,newcard);puts("AIAI");
 					}
 					throwcard(S,"player",now,"action","throw",cards);
 					player = (player+1)%4;
@@ -153,11 +153,12 @@ int main(int argc, char* argv[]){
 		printf("%s~~~~~~~~~~~~~~\n",S);
 		s = send(soc , S , sizeof(char)*strlen(S) , 0 );
 		rec = recv(soc , buf , sizeof(buf) , 0 );
-		printf("%s!!!!!!!!!!!!!!\n",buf);sprintf(tmp,"%s",buf);
+		printf("%s!!!!!!!!!!!!!!\n",buf);
+		sprintf(tmp,"%s",buf);
 		if( state == 2 && Iswin(buf) ){
 			break;
 		}
-	//	scanf("%*s");
+		scanf("%*s");
 				
 	}
 		close(soc);
@@ -249,7 +250,6 @@ void getcard(char* S){
 	
 }
 pair<int,int> getnew(char* S){
-	cout << S << "!!!!"<<endl;
 	char *ptr = strtok(S," \",:[]{}");
 	while( ptr != NULL ){
 		if( !strcmp(ptr,"color") ){
@@ -272,7 +272,6 @@ const char* Istake(int hand[4][14],int player,bool& istake){
 	tmpcolor = top[player].first , tmpnum = top[player].second;
 	before = A[tmpcolor][tmpnum]; A[tmpcolor][tmpnum]++;
 	bool wait = false;
-	cout << tmpcolor << " " << tmpnum << endl;
 	for( int test = 0 ; test < 2 ; test++ ){
 		
 		//init
@@ -315,12 +314,19 @@ const char* Istake(int hand[4][14],int player,bool& istake){
 						if( A[i][j] ){
 							flg++;
 						}
+						if( j == 13 && A[i][1] ){
+							flg++;
+						}
 						else break;
 					}
 					if( flg >= 3 ){
 						for( int k = st ; k < j ; k++ ){
 							A[i][k]--;Sum++;
 							used[usedsz].push_back(pair<int,int>(i,k) );
+							if( k==13 && A[i][1] ){
+								A[i][1]--;Sum++;
+								useful[usedsz].push_back(pair<int,int>(i,1));
+							}
 						}
 						usedsz++;
 					}
@@ -357,12 +363,19 @@ const char* Istake(int hand[4][14],int player,bool& istake){
 							if( A[i][j] ){
 								flg++;
 							}
+							if( j == 13 && A[i][1] ){
+								flg++;
+							}
 							else break;
 						}
 						if( flg >= 2 ){
 							for( int k = st ; k < j ; k++ ){
 								A[i][k]--;Sum++;
 								useful[usefulsz].push_back(pair<int,int>(i,k) );
+								if( k==13 && A[i][1] ){
+									A[i][1]--;Sum++;
+									useful[usefulsz].push_back(pair<int,int>(i,1));
+								}
 							}
 							usefulsz++;
 						}
@@ -412,7 +425,7 @@ const char* Istake(int hand[4][14],int player,bool& istake){
 	return cards.c_str();
 }
 const char* AI(int hand[4][14],pair<int,int>& newcard){
-	
+	cout << newcard.first << " " << newcard.second << endl;
 	int flg = 0 , usedsz = 0 , usefulsz = 0 , st , A[4][14] , total = 0 , cardn = 0 ;
 	for( int i = 0 ; i < 4 ; i++ )
 		for( int j = 0 ; j < 14 ; j++ )
@@ -461,12 +474,19 @@ const char* AI(int hand[4][14],pair<int,int>& newcard){
 					if( A[i][j] ){
 						flg++;
 					}
+					if( j == 13 && A[i][1] ){
+						flg++;
+					}
 					else break;
 				}
 				if( flg >= 3 ){
 					for( int k = st ; k < j ; k++ ){
 						A[i][k]--;Sum++;
 						used[usedsz].push_back(pair<int,int>(i,k) );
+						if( k==13 && A[i][1] ){
+								A[i][1]--;Sum++;
+								useful[usedsz].push_back(pair<int,int>(i,1));
+							}
 					}
 					usedsz++;
 				}
@@ -502,12 +522,20 @@ const char* AI(int hand[4][14],pair<int,int>& newcard){
 						if( A[i][j] ){
 							flg++;
 						}
+						if( j == 13 ){
+							if( A[i][1] )
+								flg++;
+						}
 						else break;
 					}
 					if( flg >= 2 ){
 						for( int k = st ; k < j ; k++ ){
 							A[i][k]--;Sum++;
 							useful[usefulsz].push_back(pair<int,int>(i,k) );
+							if( k==13 && A[i][1] ){
+								A[i][1]--;Sum++;
+								useful[usefulsz].push_back(pair<int,int>(i,1));
+							}
 						}
 						usefulsz++;
 					}
