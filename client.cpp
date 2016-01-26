@@ -23,11 +23,154 @@ using namespace std;
 
 const char* Color[] = {"red", "black", "yellow" , "blue" };
 
-pair<string,int> top[5];
-int hand[4][14];
+pair<int,int> top[5];
+int hand[4][14]; // color , num
 char tmp[2048];
+vector< pair<int,int> > used[10]; // color , num
+vector< pair<int,int> > useful[10];
+vector< pair<int,int> > trash;
+int Sum = 0;
 
 
+void show(){
+	for( int i = 0 ; i < 4 ; i++ ){
+		for( int j = 1 ; j < 14 ; j++ )
+			printf("%d ",hand[i][j]);
+		puts("");
+	}
+	puts("!!!!!!!!!!!!!!!!");
+}
+
+string makecards(const char* color , int num){
+	string n = to_string(num).c_str();
+	string tmp = (string)"{" + "\"color\"" + ":" + "\"" + color + "\"" + ","+ "\"number\"" + ":" + n + "}";
+	return tmp;
+}
+const char* AI(int hand[4][14],int player,bool& istake){
+	int flg = 0 , usedsz = 0 , usefulsz = 0 , st;
+	int tmpcolor = top[player].first , tmpnum = top[player].second;
+	int before = hand[tmpcolor][tmpnum]++;
+	
+	for( int test = 0 ; test < 2 ; test++ ){
+		show();
+		//init
+		for( int i = 0 ; i < 10 ; i++ )
+		used[i].clear(),useful[i].clear();
+		Sum = 0;
+		//get used card
+		for( int i = 1 ; i < 14 ; i++ ){
+			flg = 0;
+			for( int j = 0 ; j < 4 ; j++ ){
+				if( hand[j][i] ){
+					flg++;
+				}
+			}
+			if( flg >= 3 ){
+				for( int j = 0 ; j < 4 ; j++ ){
+					if( hand[j][i] ){
+						hand[j][i]--;Sum++;
+						used[usedsz].push_back(pair<int,int>(j,i) );
+					}
+				}
+				usedsz++;
+			}
+		}
+		flg = 0;
+		for( int i = 0 ; i < 4 ; i++ ){
+			for( int j = 1 ; j < 14 ; j++ ){
+				st = j;flg = 0;
+				if( hand[i][j] )
+					for(  ; j < 14 ; j++ ){
+						if( hand[i][j] ){
+							flg++;
+						}
+						else break;
+					}
+				if( flg >= 3 ){
+					for( int k = st ; k < j ; k++ ){
+						hand[i][k]--;Sum++;
+						used[usedsz].push_back(pair<int,int>(i,k) );
+					}
+				}
+				usedsz++;
+			}
+		}
+		
+		show();
+		scanf("%*s");
+		// get useful cards
+		for( int i = 0 ; i < usedsz ; i++ ){
+			for( int j = 0 ; j < used[i].size() ; j++ )
+				cout << Color[used[i][j].first] << " ! ! " << used[i][j].second <<endl;
+		}
+		for( int i = 1 ; i < 14 ; i++ ){
+			flg = 0;
+			for( int j = 0 ; j < 4 ; j++ ){
+				if( hand[j][i] ){
+					flg++;
+				}
+			}
+			if( flg >= 2 ){
+				for( int j = 0 ; j < 4 ; j++ ){
+					if( hand[j][i] ){
+						hand[j][i]--;Sum++;
+						useful[usefulsz].push_back(pair<int,int>(j,i) );
+					}
+				}
+				usefulsz++;
+			}
+		}
+		st = 0;
+		for( int i = 0 ; i < 4 ; i++ ){
+			
+			for( int j = 1 ; j < 14 ; j++ ){
+				st = j;flg = 0;
+				if( hand[i][j] )
+					for(  ; j < 14 ; j++ ){
+						if( hand[i][j] ){
+							flg++;
+						}
+						else break;
+					}
+				if( flg >= 2 ){
+					for( int k = st ; k < j ; k++ ){
+						hand[i][k]--;Sum++;
+						used[usefulsz].push_back(pair<int,int>(i,k) );
+					}
+				}
+				usefulsz++;
+			}
+		}
+		if( hand[tmpcolor][tmpnum] - before == 0 ){
+			istake = true;
+			break;
+		}
+		else hand[tmpcolor][tmpnum]--;
+	}
+	
+	//get trash
+	for( int i = 0 ; i < 4 ; i++ )
+		for( int j = 1 ; j < 14 ; j++ )
+			trash.push_back(pair<int,int>(i,j) );
+	//build new hand
+	string cards;
+	for( int i = 0 ; i < usedsz ; i++, cards+= "," ){
+		for( int j = 0 ; j < used[i].size() ; j++, cards+="," )
+			cards += makecards(Color[used[i][j].first],used[i][j].second);
+		cards += makecards("empty",-1);
+	}
+	for( int i = 0 ; i < usefulsz ; i++, cards += "," ){
+		for( int j = 0 ; j < useful[i].size() ; j++, cards += "," )
+			cards += makecards(Color[useful[i][j].first],useful[i][j].second);
+		cards += makecards("empty",-1);
+	}
+	for( int i = Sum ; i < 24 ; i++, cards += "," ){
+		cards += makecards("empty",-1);
+	}
+	cards += makecards("empty",-1);
+	cards = (string)"\"card\"" + ":" + "{" + cards + "}";
+	return cards.c_str();
+}
 
 void next(char* &ptr){
 	ptr = strtok(NULL," \",:[]{}");
@@ -43,14 +186,25 @@ void buildmap(string tmp,int num){
 	else if( !strcmp(color,Color[blue]) )
 		hand[blue][num]++;
 }
-char* getcard(char* S){
+pair<int,int> buildtop(string tmp,int num){
+	const char* color = tmp.c_str();
+	if( !strcmp(color,Color[red]) )
+		return pair<int,int>(red,num);
+	else if( !strcmp(color,Color[black]) )
+		return pair<int,int>(black,num);
+	else if( !strcmp(color,Color[yellow]) )
+		return pair<int,int>(yellow,num);
+	else if( !strcmp(color,Color[blue]) )
+		return pair<int,int>(blue,num);
+}
+void getcard(char* S){
 	string color;
 	int num;
 	char *ptr=NULL;
 	
 	ptr = strtok(S," \",:[]{}");
 	while( ptr != NULL ){
-		printf("%s$$$$$$$\n",ptr);
+//		printf("%s$$$$$$$\n",ptr);
 		if( !strcmp(ptr,"hand") ){
 			next(ptr);
 			for( int i = 0 ; i < 24 ; i++,next(ptr) ){
@@ -70,39 +224,33 @@ char* getcard(char* S){
 				color = ptr;
 				next(ptr),next(ptr);
 				num = atoi(ptr);
-				pair<string,int> tmp(color,num);
-				top[1] = tmp;
+				top[0] = buildtop(color,num);
 			}
 			else if( !strcmp(ptr,"player2") ){
 				next(ptr),next(ptr);
 				color = ptr;
 				next(ptr),next(ptr);
 				num = atoi(ptr);
-				pair<string,int> tmp(color,num);
-				top[2] = tmp;
+				top[1] = buildtop(color,num);
 			}
 			else if( !strcmp(ptr,"player3") ){
 				next(ptr),next(ptr);
 				color = ptr;
 				next(ptr),next(ptr);
 				num = atoi(ptr);
-				pair<string,int> tmp(color,num);
-				top[3] = tmp;
+				top[2] = buildtop(color,num);
 			}
 			else if( !strcmp(ptr,"player4") ){
 				next(ptr),next(ptr);
 				color = ptr;
 				next(ptr),next(ptr);
 				num = atoi(ptr);
-				pair<string,int> tmp(color,num);
-				top[4] = tmp;
+				top[3] = buildtop(color,num);
 			}
 		}
-		
 		next(ptr);
 	}
 	
-	return tmp;
 }
 void init(char* S,const char* k1 ,const char* v1 ,const char* k2 ,const char* k3 ,const char* v2){
 	sprintf(S,"{\"%s\":\"%s\",\"%s\":{\"%s\":\"%s\"}}",k1,v1,k2,k3,v2);
@@ -120,7 +268,7 @@ int main(int argc, char* argv[]){
 	int soc , s , rec , con , state = 0;
 	char *IP = argv[1] , *port = argv[2];
 	char S[2048] , buf[2048] ;
-	char* cards;
+	const char* cards;
 
 	sockaddr_in server , client;
 	socklen_t len = sizeof( sockaddr_in );
@@ -140,7 +288,7 @@ int main(int argc, char* argv[]){
 	printf("#set up\n");
 	printf("TCP Server listening on %s:%s\n\n",IP,port);
 	
-	bool first = true;
+	bool first = true , istake = false;
 	int player = 0;
 	state = 0;
 	while( 1 ){
@@ -159,8 +307,13 @@ int main(int argc, char* argv[]){
 					break;
 				case 1:
 					memset(hand,0,sizeof(hand) );
-					cards = getcard(tmp);
-					takecard(S,"player",now,"action","take","from","deck");
+					getcard(tmp);
+					istake = false;
+					cards = AI(hand,player,istake);
+					if( istake )
+						takecard(S,"player",now,"action","take","from","deck");
+					else 
+						takecard(S,"player",now,"action","take","from","discard");
 					state = 2;
 					break;
 				case 2:
