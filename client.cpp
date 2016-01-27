@@ -15,7 +15,7 @@
 #include <utility>
 #include <bits/stdc++.h>
 using namespace std;
-
+#define max 8192
 #define red 0
 #define black 1
 #define yellow 2
@@ -25,7 +25,7 @@ const char* Color[] = {"red", "black", "yellow" , "blue" };
 
 pair<int,int> top[5];
 int hand[4][14]; // color , num
-char tmp[2048];
+char tmp[max];
 vector< pair<int,int> > used[10]; // color , num
 vector< pair<int,int> > useful[10];
 vector< pair<int,int> > trash;
@@ -84,7 +84,7 @@ void throwcard(char* S,const char* k1,const char* v1,const char* k2,const char* 
 int main(int argc, char* argv[]){
 	int soc , s , rec , con , state = 0;
 	char *IP = argv[1] , *port = argv[2];
-	char S[2048] , buf[2048] ;
+	char S[max] , buf[max] ;
 	const char* cards;
 
 	sockaddr_in server , client;
@@ -126,7 +126,7 @@ int main(int argc, char* argv[]){
 					break;
 				case 1:
 					memset(hand,0,sizeof(hand) );
-					getcard(tmp);show(hand);
+					getcard(tmp);//show(hand);
 					istake = false;
 					cards = Istake(hand,(player+3)%4,istake);
 					if( istake )
@@ -158,7 +158,7 @@ int main(int argc, char* argv[]){
 		if( state == 2 && Iswin(buf) ){
 			break;
 		}
-		scanf("%*s");
+	//	scanf("%*s");
 				
 	}
 		close(soc);
